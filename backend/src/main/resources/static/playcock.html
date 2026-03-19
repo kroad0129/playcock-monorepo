@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Playcock 운영 테스트 콘솔</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background:#f6f7fb; color:#222; }
+    header { padding: 16px 20px; background:#1f2937; color:#fff; }
+    main { padding: 20px; display:grid; grid-template-columns: 380px 1fr; gap:16px; }
+    .card { background:#fff; border-radius:12px; padding:16px; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+    h1,h2,h3 { margin:0 0 12px 0; }
+    h2 { font-size:18px; }
+    h3 { font-size:15px; margin-top:16px; }
+    label { display:block; font-size:13px; margin:8px 0 4px; color:#444; }
+    input, textarea, select, button { width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; }
+    textarea { min-height:72px; resize:vertical; }
+    button { cursor:pointer; background:#111827; color:#fff; border:none; }
+    button.secondary { background:#374151; }
+    button.warn { background:#b45309; }
+    button.danger { background:#b91c1c; }
+    button:disabled { background:#9ca3af; cursor:not-allowed; }
+    .row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .muted { color:#6b7280; font-size:12px; }
+    .pill { display:inline-block; padding:3px 8px; border-radius:999px; font-size:12px; background:#eef2ff; margin-right:6px; }
+    .status-LISTED { background:#e0f2fe; }
+    .status-WAITING { background:#fef3c7; }
+    .status-PLAYING { background:#dcfce7; }
+    .status-REMOVED { background:#fee2e2; }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .participant, .team, .match { border:1px solid #e5e7eb; border-radius:10px; padding:12px; margin-bottom:10px; background:#fff; }
+    .small-btns { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .small-btns button { width:auto; padding:8px 10px; font-size:13px; }
+    .list { max-height: 72vh; overflow:auto; padding-right:4px; }
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+    .toolbar > * { width:auto; }
+    .selected { outline:2px solid #111827; }
+    pre { white-space:pre-wrap; word-break:break-word; background:#0b1020; color:#dbeafe; padding:12px; border-radius:8px; max-height:220px; overflow:auto; }
+    .section-gap { margin-top:18px; }
+    .checkbox-line { display:flex; align-items:center; gap:8px; margin-top:8px; }
+    .checkbox-line input { width:auto; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Playcock 운영 테스트 콘솔</h1>
+  <div class="muted">로그인 → 세션 생성 → 참가자 추가 → 대기팀 생성 → 경기 시작/종료 → 세션 종료</div>
+</header>
+
+<main>
+  <section class="card">
+    <h2>설정 / 조작</h2>
+    <label>Base URL</label>
+    <input id="baseUrl" value="http://localhost:8080" />
+
+    <h3>로그인</h3>
+    <label>Email</label>
+    <input id="email" placeholder="manager@example.com" />
+    <label>Password</label>
+    <input id="password" type="password" placeholder="비밀번호" />
+    <button id="loginBtn">로그인</button>
+    <div id="authInfo" class="muted section-gap">토큰 없음</div>
+
+    <h3>세션 생성</h3>
+    <label>카테고리</label>
+    <select id="sessionCategory">
+      <option value="REGULAR">REGULAR</option>
+      <option value="FLASH">FLASH</option>
+    </select>
+    <label>장소</label>
+    <input id="sessionLocation" placeholder="서초 체육관" />
+    <label>비고</label>
+    <textarea id="sessionNote" placeholder="테스트 세션"></textarea>
+    <button id="createSessionBtn">세션 생성</button>
+
+    <h3>현재 세션</h3>
+    <label>Session ID</label>
+    <input id="sessionId" placeholder="생성 후 자동 입력" />
+    <div class="toolbar">
+      <button class="secondary" id="refreshBtn">대시보드 새로고침</button>
+      <button class="warn" id="endSessionBtn">세션 종료</button>
+    </div>
+
+    <h3>참가자 추가</h3>
+    <label>Member IDs (쉼표 구분)</label>
+    <input id="memberIds" placeholder="1,2,3,4,5,6,7,8" />
+    <button id="addParticipantsBtn">참가자 추가</button>
+
+    <h3>대기팀 생성</h3>
+    <div class="muted">오른쪽 참가자 목록에서 LISTED 참가자 4명을 체크한 뒤 생성</div>
+    <button id="createWaitingTeamBtn">선택 4명으로 대기팀 생성</button>
+
+    <h3>로그 / 응답</h3>
+    <pre id="log"></pre>
+  </section>
+
+  <section class="card">
+    <div class="toolbar">
+      <h2 style="margin-right:auto;">운영 대시보드</h2>
+      <select id="sortMode">
+        <option value="default">기본 추천순</option>
+        <option value="name">이름순</option>
+        <option value="matchAsc">총 경기 적은 순</option>
+        <option value="matchDesc">총 경기 많은 순</option>
+        <option value="restDesc">오래 쉰 순</option>
+        <option value="restAsc">최근 경기 순</option>
+      </select>
+    </div>
+
+    <div id="sessionSummary" class="muted">세션을 생성하거나 불러오면 표시된다.</div>
+
+    <div class="grid-2 section-gap">
+      <div>
+        <h3>참가자</h3>
+        <div id="participants" class="list"></div>
+      </div>
+      <div>
+        <h3>대기팀</h3>
+        <div id="waitingTeams" class="list"></div>
+
+        <h3 class="section-gap">진행 중 경기</h3>
+        <div id="matches" class="list"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const state = { token: '', dashboard: null, selectedParticipantIds: new Set() };
+const $ = (id) => document.getElementById(id);
+
+function log(message) {
+  const area = $('log');
+  const prefix = `[${new Date().toLocaleTimeString()}] `;
+  const body = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
+  area.textContent = prefix + body + "\n\n" + area.textContent;
+}
+
+function authHeaders() {
+  const headers = { 'Content-Type': 'application/json' };
+  if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
+  return headers;
+}
+
+async function request(path, options={}) {
+  const base = $('baseUrl').value.trim().replace(/\/$/, '');
+  const res = await fetch(base + path, {
+    ...options,
+    headers: { ...authHeaders(), ...(options.headers || {}) }
+  });
+  const text = await res.text();
+  let data;
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  log(data || `HTTP ${res.status}`);
+  if (!res.ok) throw new Error((data && data.message) || text || `HTTP ${res.status}`);
+  return data;
+}
+
+function participantSort(a,b, mode) {
+  const nameA = a.memberName || '';
+  const nameB = b.memberName || '';
+  const ra = a.restMinutes == null ? Number.MAX_SAFE_INTEGER : a.restMinutes;
+  const rb = b.restMinutes == null ? Number.MAX_SAFE_INTEGER : b.restMinutes;
+  switch (mode) {
+    case 'name': return nameA.localeCompare(nameB, 'ko');
+    case 'matchAsc': return a.totalMatchCount - b.totalMatchCount || rb - ra;
+    case 'matchDesc': return b.totalMatchCount - a.totalMatchCount || rb - ra;
+    case 'restDesc': return rb - ra;
+    case 'restAsc': return ra - rb;
+    default: return 0;
+  }
+}
+
+function renderDashboard() {
+  const data = state.dashboard;
+  if (!data) return;
+
+  $('sessionSummary').innerHTML = `
+    <div><strong>${data.title}</strong></div>
+    <div class="muted">sessionId=${data.sessionId} / 세션 종료 가능=${data.canEndSession ? 'Y' : 'N'}</div>
+  `;
+  $('endSessionBtn').disabled = !data.canEndSession;
+
+  const participants = [...(data.participants || [])];
+  const sortMode = $('sortMode').value;
+  if (sortMode !== 'default') participants.sort((a,b) => participantSort(a,b,sortMode));
+
+  const pWrap = $('participants');
+  pWrap.innerHTML = '';
+  participants.forEach(p => {
+    const checked = state.selectedParticipantIds.has(p.participantId);
+    const div = document.createElement('div');
+    div.className = 'participant' + (checked ? ' selected' : '');
+    div.innerHTML = `
+      <div>
+        <span class="pill status-${p.status}">${p.status}</span>
+        <strong>${p.memberName}</strong> <span class="muted">#${p.participantId}</span>
+      </div>
+      <div class="muted">성별: ${p.gender}</div>
+      <div class="muted">총 ${p.totalMatchCount} / 남복 ${p.maleDoubleCount} / 여복 ${p.femaleDoubleCount} / 혼복 ${p.mixedDoubleCount}</div>
+      <div class="muted">마지막 경기: ${p.lastPlayedAt || '없음'} / 쉰 시간(분): ${p.restMinutes ?? '미참가'}</div>
+      <div class="checkbox-line">
+        <input type="checkbox" ${checked ? 'checked' : ''} ${p.status !== 'LISTED' ? 'disabled' : ''}/>
+        <span>대기팀 선택</span>
+      </div>
+      <div class="small-btns">
+        <button class="danger" ${p.canRemove ? '' : 'disabled'} data-action="remove" data-id="${p.participantId}">제외</button>
+        <button class="secondary" ${p.canRestore ? '' : 'disabled'} data-action="restore" data-id="${p.participantId}">복귀</button>
+      </div>
+    `;
+    const checkbox = div.querySelector('input[type="checkbox"]');
+    if (checkbox) {
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) state.selectedParticipantIds.add(p.participantId);
+        else state.selectedParticipantIds.delete(p.participantId);
+        renderDashboard();
+      });
+    }
+    div.querySelectorAll('button[data-action]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const sid = $('sessionId').value.trim();
+        if (!sid) return alert('sessionId가 필요합니다.');
+        try {
+          if (btn.dataset.action === 'remove') {
+            await request(`/api/session/${sid}/participant/${btn.dataset.id}`, { method:'DELETE' });
+          } else {
+            await request(`/api/session/${sid}/participant/${btn.dataset.id}/restore`, { method:'PATCH' });
+          }
+          await refreshDashboard();
+        } catch (e) { alert(e.message); }
+      });
+    });
+    pWrap.appendChild(div);
+  });
+
+  const wWrap = $('waitingTeams');
+  wWrap.innerHTML = '';
+  (data.waitingTeams || []).forEach(team => {
+    const div = document.createElement('div');
+    div.className = 'team';
+    div.innerHTML = `
+      <div><strong>대기팀 #${team.waitingTeamId}</strong> <span class="pill">순번 ${team.queueOrder}</span></div>
+      <div class="muted">${(team.members || []).map(m => `${m.memberName}(${m.status})`).join(', ')}</div>
+      <div class="small-btns">
+        <button class="danger" ${team.canCancel ? '' : 'disabled'} data-action="cancel" data-id="${team.waitingTeamId}">대기팀 취소</button>
+        <button ${team.canStartMatch ? '' : 'disabled'} data-action="start" data-id="${team.waitingTeamId}">경기 시작</button>
+      </div>
+    `;
+    div.querySelectorAll('button[data-action]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const sid = $('sessionId').value.trim();
+        try {
+          if (btn.dataset.action === 'cancel') {
+            await request(`/api/session/${sid}/waiting-team/${btn.dataset.id}`, { method:'DELETE' });
+          } else {
+            await request(`/api/session/${sid}/match/start`, {
+              method:'POST',
+              body: JSON.stringify({ waitingTeamId: Number(btn.dataset.id) })
+            });
+          }
+          state.selectedParticipantIds.clear();
+          await refreshDashboard();
+        } catch (e) { alert(e.message); }
+      });
+    });
+    wWrap.appendChild(div);
+  });
+
+  const mWrap = $('matches');
+  mWrap.innerHTML = '';
+  (data.matches || []).forEach(match => {
+    const div = document.createElement('div');
+    div.className = 'match';
+    div.innerHTML = `
+      <div><strong>경기 #${match.matchNumber}</strong> <span class="pill">${match.matchType}</span></div>
+      <div class="muted">${(match.participants || []).map(p => p.memberName).join(', ')}</div>
+      <div class="small-btns">
+        <button class="warn" data-id="${match.matchId}">경기 종료</button>
+      </div>
+    `;
+    div.querySelector('button').addEventListener('click', async () => {
+      const sid = $('sessionId').value.trim();
+      try {
+        await request(`/api/session/${sid}/match/${match.matchId}/end`, { method:'POST' });
+        await refreshDashboard();
+      } catch (e) { alert(e.message); }
+    });
+    mWrap.appendChild(div);
+  });
+}
+
+async function refreshDashboard() {
+  const sid = $('sessionId').value.trim();
+  if (!sid) return;
+  const res = await request(`/api/session/${sid}/dashboard`);
+  state.dashboard = res.data;
+  renderDashboard();
+}
+
+$('loginBtn').addEventListener('click', async () => {
+  try {
+    const res = await request('/api/auth/login', {
+      method:'POST',
+      body: JSON.stringify({
+        email: $('email').value.trim(),
+        password: $('password').value
+      })
+    });
+    state.token = res.data.accessToken;
+    $('authInfo').textContent = '로그인 완료 / 토큰 저장됨';
+  } catch (e) {
+    $('authInfo').textContent = '로그인 실패';
+    alert(e.message);
+  }
+});
+
+$('createSessionBtn').addEventListener('click', async () => {
+  try {
+    const res = await request('/api/session', {
+      method:'POST',
+      body: JSON.stringify({
+        category: $('sessionCategory').value || 'REGULAR',
+        location: $('sessionLocation').value.trim() || null,
+        note: $('sessionNote').value.trim() || null
+      })
+    });
+    $('sessionId').value = res.data;
+    await refreshDashboard();
+  } catch (e) { alert(e.message); }
+});
+
+$('addParticipantsBtn').addEventListener('click', async () => {
+  const sid = $('sessionId').value.trim();
+  if (!sid) return alert('sessionId가 필요합니다.');
+  const memberIds = $('memberIds').value.split(',').map(v => v.trim()).filter(Boolean).map(Number).filter(v => !Number.isNaN(v));
+  try {
+    await request(`/api/session/${sid}/participant`, {
+      method:'POST',
+      body: JSON.stringify({ memberIds })
+    });
+    await refreshDashboard();
+  } catch (e) { alert(e.message); }
+});
+
+$('createWaitingTeamBtn').addEventListener('click', async () => {
+  const sid = $('sessionId').value.trim();
+  if (!sid) return alert('sessionId가 필요합니다.');
+  const ids = [...state.selectedParticipantIds];
+  if (ids.length !== 4) return alert('LISTED 참가자 4명을 선택해야 합니다.');
+  try {
+    await request(`/api/session/${sid}/waiting-team`, {
+      method:'POST',
+      body: JSON.stringify({ sessionParticipantIds: ids })
+    });
+    state.selectedParticipantIds.clear();
+    await refreshDashboard();
+  } catch (e) { alert(e.message); }
+});
+
+$('refreshBtn').addEventListener('click', refreshDashboard);
+$('sortMode').addEventListener('change', renderDashboard);
+
+$('endSessionBtn').addEventListener('click', async () => {
+  const sid = $('sessionId').value.trim();
+  if (!sid) return alert('sessionId가 필요합니다.');
+  if (!confirm('세션을 종료할까요?')) return;
+  try {
+    await request(`/api/session/${sid}/end`, { method:'POST' });
+    await refreshDashboard();
+  } catch (e) { alert(e.message); }
+});
+</script>
+</body>
+</html>

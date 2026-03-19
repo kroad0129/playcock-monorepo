@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Playcock 운영 콘솔</title>
+  <style>
+    :root {
+      --bg: #f3f5f8;
+      --panel: #ffffff;
+      --line: #d9dee7;
+      --text: #17202a;
+      --muted: #5f6b7a;
+      --primary: #111827;
+      --primary-2: #1f2937;
+      --accent: #2563eb;
+      --danger: #b91c1c;
+      --warn: #b45309;
+      --ok: #047857;
+      --listed: #dbeafe;
+      --removed: #fee2e2;
+      --waiting: #fef3c7;
+      --playing: #dcfce7;
+      --shadow: 0 6px 18px rgba(16,24,40,0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+    }
+    header {
+      padding: 18px 22px;
+      background: var(--primary);
+      color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    header h1 { margin: 0 0 6px; font-size: 22px; }
+    header p { margin: 0; color: #d1d5db; font-size: 13px; }
+    main {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 16px;
+      padding: 16px;
+      min-height: calc(100vh - 86px);
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel .hd {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .panel .hd h2,
+    .panel .hd h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+    .panel .bd { padding: 16px; }
+    .stack { display: grid; gap: 16px; }
+    .field { display: grid; gap: 6px; }
+    .field label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+    input, textarea, select, button {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      font-size: 14px;
+      background: #fff;
+      color: var(--text);
+    }
+    textarea { min-height: 84px; resize: vertical; }
+    button {
+      cursor: pointer;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+    }
+    button.secondary { background: var(--primary-2); }
+    button.outline {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+    button.danger { background: var(--danger); }
+    button.warn { background: var(--warn); }
+    button.ok { background: var(--ok); }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    .row-2, .row-3 { display: grid; gap: 10px; }
+    .row-2 { grid-template-columns: 1fr 1fr; }
+    .row-3 { grid-template-columns: repeat(3, 1fr); }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+    .toolbar > * { width: auto; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0,1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+    }
+    .metric .k { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    .metric .v { font-size: 22px; font-weight: 700; }
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .tab {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fff;
+    }
+    .tab h4 { margin: 0 0 8px; font-size: 14px; }
+    .tab .count { font-size: 22px; font-weight: 700; }
+    .grid-main {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 16px;
+    }
+    .list-wrap {
+      display: grid;
+      gap: 16px;
+    }
+    .list {
+      max-height: 68vh;
+      overflow: auto;
+      padding-right: 4px;
+    }
+    .item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fff;
+      margin-bottom: 10px;
+    }
+    .item.selected { outline: 2px solid var(--accent); }
+    .item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .item-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .status-LISTED { background: var(--listed); }
+    .status-WAITING { background: var(--waiting); }
+    .status-PLAYING { background: var(--playing); }
+    .status-REMOVED { background: var(--removed); }
+    .small-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .small-actions button { width: auto; padding: 8px 10px; font-size: 12px; }
+    .kv {
+      display: grid;
+      grid-template-columns: 86px 1fr;
+      gap: 6px 10px;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    .kv .k { color: var(--muted); }
+    .inline-check { display: flex; gap: 8px; align-items: center; }
+    .inline-check input { width: auto; }
+    .table-wrap {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: middle;
+    }
+    thead th {
+      background: #f8fafc;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    tbody tr:hover { background: #f9fbff; }
+    .right-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #0b1020;
+      color: #dbeafe;
+      padding: 12px;
+      border-radius: 12px;
+      max-height: 220px;
+      overflow: auto;
+      font-size: 12px;
+    }
+    .hidden { display: none; }
+    @media (max-width: 1200px) {
+      main { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .grid-main { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Playcock 운영 콘솔</h1>
+  <p>멤버 조회 → 세션 선택/생성 → 참가자 추가/제외 → 대기팀 생성/취소 → 경기 시작/종료 → 세션 종료</p>
+</header>
+<main>
+  <section class="stack">
+    <div class="panel">
+      <div class="hd"><h2>접속 / 인증</h2></div>
+      <div class="bd stack">
+        <div class="field">
+          <label>Base URL</label>
+          <input id="baseUrl" value="http://localhost:8080" />
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input id="email" placeholder="manager@example.com" />
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input id="password" type="password" placeholder="비밀번호" />
+        </div>
+        <div class="toolbar">
+          <button id="loginBtn">로그인</button>
+          <button id="logoutBtn" class="outline">로그아웃</button>
+        </div>
+        <div id="authInfo" class="muted">토큰 없음</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="hd"><h2>세션</h2></div>
+      <div class="bd stack">
+        <div class="toolbar">
+          <button id="loadSessionsBtn" class="outline">세션 목록 불러오기</button>
+          <button id="refreshBtn" class="secondary">대시보드 새로고침</button>
+        </div>
+
+        <div class="field">
+          <label>현재 세션 선택</label>
+          <select id="sessionSelect">
+            <option value="">세션을 선택하세요</option>
+          </select>
+        </div>
+
+        <div class="row-2">
+          <div class="field">
+            <label>Session ID</label>
+            <input id="sessionId" placeholder="선택 시 자동 입력" />
+          </div>
+          <div class="field">
+            <label>정렬</label>
+            <select id="participantSortMode">
+              <option value="default">기본</option>
+              <option value="name">이름순</option>
+              <option value="matchAsc">총 경기 적은 순</option>
+              <option value="matchDesc">총 경기 많은 순</option>
+              <option value="restDesc">오래 쉰 순</option>
+              <option value="restAsc">최근 경기 순</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <button id="endSessionBtn" class="warn">세션 종료</button>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--line);margin:0;">
+
+        <div class="field">
+          <label>세션 생성 - 카테고리</label>
+          <select id="sessionCategory">
+            <option value="REGULAR">REGULAR</option>
+            <option value="FLASH">FLASH</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>세션 생성 - 장소</label>
+          <input id="sessionLocation" placeholder="서초 체육관" />
+        </div>
+        <div class="field">
+          <label>세션 생성 - 비고</label>
+          <textarea id="sessionNote" placeholder="운영 공지"></textarea>
+        </div>
+        <button id="createSessionBtn">새 세션 생성</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="hd"><h2>멤버 조회 / 참가자 추가</h2></div>
+      <div class="bd stack">
+        <div class="row-2">
+          <div class="field">
+            <label>이름</label>
+            <input id="memberFilterName" placeholder="예: 김민수" />
+          </div>
+          <div class="field">
+            <label>학교</label>
+            <input id="memberFilterSchool" placeholder="예: 건국대" />
+          </div>
+        </div>
+        <div class="row-3">
+          <div class="field">
+            <label>기수</label>
+            <input id="memberFilterGeneration" placeholder="예: 24" />
+          </div>
+          <div class="field">
+            <label>성별</label>
+            <select id="memberFilterGender">
+              <option value="">전체</option>
+              <option value="MALE">MALE</option>
+              <option value="FEMALE">FEMALE</option>
+              <option value="OTHER">OTHER</option>
+              <option value="UNKNOWN">UNKNOWN</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>활성 여부</label>
+            <select id="memberFilterActive">
+              <option value="">전체</option>
+              <option value="true">true</option>
+              <option value="false">false</option>
+            </select>
+          </div>
+        </div>
+        <div class="row-3">
+          <div class="field">
+            <label>page</label>
+            <input id="memberPage" type="number" min="0" value="0" />
+          </div>
+          <div class="field">
+            <label>size</label>
+            <input id="memberSize" type="number" min="1" value="10" />
+          </div>
+          <div class="field">
+            <label>sort</label>
+            <input id="memberSort" value="id,desc" />
+          </div>
+        </div>
+        <div class="toolbar">
+          <button id="searchMembersBtn">멤버 검색</button>
+          <button id="resetMembersBtn" class="outline">검색 초기화</button>
+        </div>
+        <div class="muted">목록에서 체크한 멤버를 현재 세션에 참가자로 추가한다. REMOVED 상태였던 사람은 자동 복귀된다.</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:36px;"><input type="checkbox" id="toggleAllMembers"></th>
+                <th>ID</th>
+                <th>이름</th>
+                <th>학교</th>
+                <th>기수</th>
+                <th>성별</th>
+                <th>활성</th>
+              </tr>
+            </thead>
+            <tbody id="membersTbody">
+              <tr><td colspan="7" class="muted">검색 전</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="memberPageInfo" class="muted">페이지 정보 없음</div>
+        <div class="right-actions">
+          <button id="addSelectedMembersBtn" class="ok">선택 멤버를 참가자로 추가</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="hd"><h2>로그 / 응답</h2></div>
+      <div class="bd">
+        <pre id="log"></pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="hd">
+      <h2>운영 대시보드</h2>
+      <div class="muted" id="sessionSummary">세션을 선택하면 표시된다.</div>
+    </div>
+    <div class="bd">
+      <div class="summary-grid">
+        <div class="metric"><div class="k">LISTED</div><div class="v" id="listedCount">0</div></div>
+        <div class="metric"><div class="k">REMOVED</div><div class="v" id="removedCount">0</div></div>
+        <div class="metric"><div class="k">대기팀</div><div class="v" id="waitingCount">0</div></div>
+        <div class="metric"><div class="k">진행 경기</div><div class="v" id="matchCount">0</div></div>
+        <div class="metric"><div class="k">세션 종료 가능</div><div class="v" id="canEndValue">N</div></div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab"><h4>세션</h4><div class="count" id="summarySessionId">-</div></div>
+        <div class="tab"><h4>선택된 LISTED</h4><div class="count" id="selectedListedCount">0</div></div>
+        <div class="tab"><h4>선택된 REMOVED</h4><div class="count" id="selectedRemovedCount">0</div></div>
+        <div class="tab"><h4>대기팀 생성 준비</h4><div class="count" id="waitingReadyCount">0/4</div></div>
+      </div>
+
+      <div class="grid-main">
+        <div class="list-wrap">
+          <div>
+            <div class="hd" style="padding:0 0 10px;border:none;"><h3>LISTED 참가자</h3></div>
+            <div class="muted" style="margin-bottom:10px;">체크한 LISTED 4명으로 대기팀을 만든다.</div>
+            <div class="toolbar" style="margin-bottom:10px;">
+              <button id="createWaitingTeamBtn">선택 4명으로 대기팀 생성</button>
+              <button id="clearListedSelectionBtn" class="outline">선택 해제</button>
+            </div>
+            <div id="listedParticipants" class="list"></div>
+          </div>
+
+          <div>
+            <div class="hd" style="padding:0 0 10px;border:none;"><h3>REMOVED 참가자</h3></div>
+            <div class="muted" style="margin-bottom:10px;">복귀 버튼은 두지 않는다. 체크 후 다시 참가자 추가를 호출한다.</div>
+            <div class="toolbar" style="margin-bottom:10px;">
+              <button id="reAddRemovedBtn" class="ok">선택 REMOVED 다시 참가자 추가</button>
+              <button id="clearRemovedSelectionBtn" class="outline">선택 해제</button>
+            </div>
+            <div id="removedParticipants" class="list"></div>
+          </div>
+        </div>
+
+        <div class="list-wrap">
+          <div>
+            <div class="hd" style="padding:0 0 10px;border:none;"><h3>대기팀</h3></div>
+            <div id="waitingTeams" class="list"></div>
+          </div>
+          <div>
+            <div class="hd" style="padding:0 0 10px;border:none;"><h3>진행 중 경기</h3></div>
+            <div id="matches" class="list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  const state = {
+    token: '',
+    dashboard: null,
+    sessionList: [],
+    selectedListedParticipantIds: new Set(),
+    selectedRemovedMemberIds: new Set(),
+    selectedMemberIds: new Set(),
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  function log(message) {
+    const area = $('log');
+    const body = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
+    area.textContent = `[${new Date().toLocaleTimeString()}] ${body}\n\n` + area.textContent;
+  }
+
+  function authHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
+    if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
+    return headers;
+  }
+
+  async function request(path, options = {}) {
+    const base = $('baseUrl').value.trim().replace(/\/$/, '');
+    const res = await fetch(base + path, {
+      ...options,
+      headers: { ...authHeaders(), ...(options.headers || {}) }
+    });
+
+    const text = await res.text();
+    let data = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = text;
+    }
+
+    log({ method: options.method || 'GET', path, status: res.status, body: data });
+
+    if (!res.ok) {
+      const msg = data?.message || data?.error || text || `HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+    return data;
+  }
+
+  function currentSessionId() {
+    return $('sessionId').value.trim();
+  }
+
+  function participantSort(a, b, mode) {
+    const nameA = a.memberName || '';
+    const nameB = b.memberName || '';
+    const ra = a.restMinutes == null ? Number.MAX_SAFE_INTEGER : a.restMinutes;
+    const rb = b.restMinutes == null ? Number.MAX_SAFE_INTEGER : b.restMinutes;
+    switch (mode) {
+      case 'name': return nameA.localeCompare(nameB, 'ko');
+      case 'matchAsc': return a.totalMatchCount - b.totalMatchCount || rb - ra;
+      case 'matchDesc': return b.totalMatchCount - a.totalMatchCount || rb - ra;
+      case 'restDesc': return rb - ra;
+      case 'restAsc': return ra - rb;
+      default: return 0;
+    }
+  }
+
+  function refreshSelectionSummary() {
+    $('selectedListedCount').textContent = state.selectedListedParticipantIds.size;
+    $('selectedRemovedCount').textContent = state.selectedRemovedMemberIds.size;
+    $('waitingReadyCount').textContent = `${state.selectedListedParticipantIds.size}/4`;
+  }
+
+  function resetDashboardSelections() {
+    state.selectedListedParticipantIds.clear();
+    state.selectedRemovedMemberIds.clear();
+    refreshSelectionSummary();
+  }
+
+  function fillSessionSelect(list) {
+    const select = $('sessionSelect');
+    const current = currentSessionId();
+    select.innerHTML = '<option value="">세션을 선택하세요</option>';
+    list.forEach(session => {
+      const option = document.createElement('option');
+      option.value = session.sessionId;
+      option.textContent = `#${session.sessionId} ${session.title} (${session.status})`;
+      if (String(session.sessionId) === String(current)) option.selected = true;
+      select.appendChild(option);
+    });
+  }
+
+  async function loadSessions() {
+    const res = await request('/api/session');
+    state.sessionList = res.data || [];
+    fillSessionSelect(state.sessionList);
+  }
+
+  async function refreshDashboard() {
+    const sid = currentSessionId();
+    if (!sid) {
+      state.dashboard = null;
+      renderDashboard();
+      return;
+    }
+    const res = await request(`/api/session/${sid}/dashboard`);
+    state.dashboard = res.data;
+    renderDashboard();
+  }
+
+  function renderMembers(pageData) {
+    const tbody = $('membersTbody');
+    tbody.innerHTML = '';
+
+    const content = pageData?.content || [];
+    if (!content.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="muted">조회 결과 없음</td></tr>';
+    } else {
+      content.forEach(member => {
+        const tr = document.createElement('tr');
+        const checked = state.selectedMemberIds.has(member.id);
+        tr.innerHTML = `
+          <td><input type="checkbox" data-member-id="${member.id}" ${checked ? 'checked' : ''}></td>
+          <td>${member.id}</td>
+          <td>${member.name ?? '-'}</td>
+          <td>${member.schoolName ?? '-'}</td>
+          <td>${member.generation ?? '-'}</td>
+          <td>${member.gender ?? '-'}</td>
+          <td>${member.active}</td>
+        `;
+        tr.querySelector('input').addEventListener('change', (e) => {
+          const id = Number(e.target.dataset.memberId);
+          if (e.target.checked) state.selectedMemberIds.add(id);
+          else state.selectedMemberIds.delete(id);
+          syncToggleAllMembers(content);
+        });
+        tbody.appendChild(tr);
+      });
+    }
+
+    $('memberPageInfo').textContent = pageData
+      ? `page=${pageData.number} / size=${pageData.size} / totalPages=${pageData.totalPages} / totalElements=${pageData.totalElements}`
+      : '페이지 정보 없음';
+
+    syncToggleAllMembers(content);
+  }
+
+  function syncToggleAllMembers(content) {
+    const allIds = (content || []).map(member => member.id);
+    const hasRows = allIds.length > 0;
+    const allChecked = hasRows && allIds.every(id => state.selectedMemberIds.has(id));
+    $('toggleAllMembers').checked = allChecked;
+  }
+
+  async function searchMembers() {
+    const query = new URLSearchParams();
+    const name = $('memberFilterName').value.trim();
+    const schoolName = $('memberFilterSchool').value.trim();
+    const generation = $('memberFilterGeneration').value.trim();
+    const gender = $('memberFilterGender').value;
+    const active = $('memberFilterActive').value;
+    const page = $('memberPage').value || '0';
+    const size = $('memberSize').value || '10';
+    const sort = $('memberSort').value.trim() || 'id,desc';
+
+    if (name) query.set('name', name);
+    if (schoolName) query.set('schoolName', schoolName);
+    if (generation) query.set('generation', generation);
+    if (gender) query.set('gender', gender);
+    if (active) query.set('active', active);
+    query.set('page', page);
+    query.set('size', size);
+    query.set('sort', sort);
+
+    const res = await request(`/api/members?${query.toString()}`);
+    renderMembers(res.data);
+  }
+
+  function renderParticipantCard(participant, kind) {
+    const checked = kind === 'listed'
+      ? state.selectedListedParticipantIds.has(participant.participantId)
+      : state.selectedRemovedMemberIds.has(participant.memberId ?? -1);
+
+    const card = document.createElement('div');
+    card.className = 'item' + (checked ? ' selected' : '');
+
+    const checkLabel = kind === 'listed' ? '대기팀 대상 선택' : '재추가 대상 선택';
+    const checkValue = kind === 'listed' ? participant.participantId : participant.memberId;
+
+    card.innerHTML = `
+      <div class="item-top">
+        <div class="item-title">
+          <span class="pill status-${participant.status}">${participant.status}</span>
+          <strong>${participant.memberName}</strong>
+          <span class="muted">participantId #${participant.participantId}</span>
+          ${participant.memberId ? `<span class="muted">memberId #${participant.memberId}</span>` : ''}
+        </div>
+      </div>
+      <div class="kv">
+        <div class="k">성별</div><div>${participant.gender ?? '-'}</div>
+        <div class="k">총 경기</div><div>${participant.totalMatchCount}</div>
+        <div class="k">남/여/혼복</div><div>${participant.maleDoubleCount} / ${participant.femaleDoubleCount} / ${participant.mixedDoubleCount}</div>
+        <div class="k">마지막 경기</div><div>${participant.lastPlayedAt || '없음'}</div>
+        <div class="k">쉰 시간(분)</div><div>${participant.restMinutes ?? '미참가'}</div>
+      </div>
+      <div class="small-actions">
+        <label class="inline-check"><input type="checkbox" data-kind="${kind}" data-id="${checkValue}"> ${checkLabel}</label>
+        ${kind === 'listed' ? `<button class="danger" ${participant.canRemove ? '' : 'disabled'} data-action="remove" data-id="${participant.participantId}">참가자 제외</button>` : ''}
+      </div>
+    `;
+
+    const checkbox = card.querySelector('input[type="checkbox"]');
+    checkbox.checked = checked;
+    checkbox.addEventListener('change', (e) => {
+      const id = Number(e.target.dataset.id);
+      if (kind === 'listed') {
+        if (e.target.checked) state.selectedListedParticipantIds.add(id);
+        else state.selectedListedParticipantIds.delete(id);
+      } else {
+        if (e.target.checked) state.selectedRemovedMemberIds.add(id);
+        else state.selectedRemovedMemberIds.delete(id);
+      }
+      refreshSelectionSummary();
+      renderDashboard();
+    });
+
+    const removeBtn = card.querySelector('button[data-action="remove"]');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', async () => {
+        const sid = currentSessionId();
+        if (!sid) return alert('sessionId가 필요합니다.');
+        if (!confirm('해당 참가자를 REMOVED 처리할까요?')) return;
+        try {
+          await request(`/api/session/${sid}/participant/${removeBtn.dataset.id}`, { method: 'DELETE' });
+          state.selectedListedParticipantIds.delete(Number(removeBtn.dataset.id));
+          await refreshDashboard();
+        } catch (e) {
+          alert(e.message);
+        }
+      });
+    }
+
+    return card;
+  }
+
+  function renderDashboard() {
+    const data = state.dashboard;
+    refreshSelectionSummary();
+
+    if (!data) {
+      $('sessionSummary').textContent = '세션을 선택하면 표시된다.';
+      $('listedCount').textContent = '0';
+      $('removedCount').textContent = '0';
+      $('waitingCount').textContent = '0';
+      $('matchCount').textContent = '0';
+      $('canEndValue').textContent = 'N';
+      $('summarySessionId').textContent = '-';
+      $('listedParticipants').innerHTML = '';
+      $('removedParticipants').innerHTML = '';
+      $('waitingTeams').innerHTML = '';
+      $('matches').innerHTML = '';
+      return;
+    }
+
+    $('sessionSummary').textContent = `${data.title} / sessionId=${data.sessionId}`;
+    $('listedCount').textContent = String((data.listedParticipants || []).length);
+    $('removedCount').textContent = String((data.removedParticipants || []).length);
+    $('waitingCount').textContent = String((data.waitingTeams || []).length);
+    $('matchCount').textContent = String((data.matches || []).length);
+    $('canEndValue').textContent = data.canEndSession ? 'Y' : 'N';
+    $('summarySessionId').textContent = String(data.sessionId);
+    $('endSessionBtn').disabled = !data.canEndSession;
+
+    const sortMode = $('participantSortMode').value;
+    const listed = [...(data.listedParticipants || [])].sort((a, b) => participantSort(a, b, sortMode));
+    const removed = [...(data.removedParticipants || [])].sort((a, b) => participantSort(a, b, sortMode));
+
+    const listedWrap = $('listedParticipants');
+    listedWrap.innerHTML = '';
+    if (!listed.length) listedWrap.innerHTML = '<div class="muted">LISTED 참가자 없음</div>';
+    listed.forEach(participant => listedWrap.appendChild(renderParticipantCard(participant, 'listed')));
+
+    const removedWrap = $('removedParticipants');
+    removedWrap.innerHTML = '';
+    if (!removed.length) removedWrap.innerHTML = '<div class="muted">REMOVED 참가자 없음</div>';
+    removed.forEach(participant => removedWrap.appendChild(renderParticipantCard(participant, 'removed')));
+
+    const waitingWrap = $('waitingTeams');
+    waitingWrap.innerHTML = '';
+    (data.waitingTeams || []).forEach(team => {
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `
+        <div class="item-top">
+          <div class="item-title">
+            <strong>대기팀 #${team.waitingTeamId}</strong>
+            <span class="pill status-WAITING">순번 ${team.queueOrder}</span>
+          </div>
+        </div>
+        <div class="muted">${(team.members || []).map(m => `${m.memberName}(${m.status})`).join(', ')}</div>
+        <div class="small-actions">
+          <button class="danger" ${team.canCancel ? '' : 'disabled'} data-action="cancel" data-id="${team.waitingTeamId}">대기팀 취소</button>
+          <button ${team.canStartMatch ? '' : 'disabled'} data-action="start" data-id="${team.waitingTeamId}">경기 시작</button>
+        </div>
+      `;
+      div.querySelectorAll('button[data-action]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const sid = currentSessionId();
+          if (!sid) return;
+          try {
+            if (btn.dataset.action === 'cancel') {
+              await request(`/api/session/${sid}/waiting-team/${btn.dataset.id}`, { method: 'DELETE' });
+            } else {
+              await request(`/api/session/${sid}/match/start`, {
+                method: 'POST',
+                body: JSON.stringify({ waitingTeamId: Number(btn.dataset.id) })
+              });
+            }
+            resetDashboardSelections();
+            await refreshDashboard();
+          } catch (e) {
+            alert(e.message);
+          }
+        });
+      });
+      waitingWrap.appendChild(div);
+    });
+    if (!(data.waitingTeams || []).length) waitingWrap.innerHTML = '<div class="muted">대기팀 없음</div>';
+
+    const matchWrap = $('matches');
+    matchWrap.innerHTML = '';
+    (data.matches || []).forEach(match => {
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `
+        <div class="item-top">
+          <div class="item-title">
+            <strong>경기 #${match.matchNumber}</strong>
+            <span class="pill status-PLAYING">${match.matchType}</span>
+            <span class="muted">${match.status}</span>
+          </div>
+        </div>
+        <div class="muted">${(match.participants || []).map(p => p.memberName).join(', ')}</div>
+        <div class="small-actions">
+          <button class="warn" data-id="${match.matchId}">경기 종료</button>
+        </div>
+      `;
+      div.querySelector('button').addEventListener('click', async () => {
+        const sid = currentSessionId();
+        if (!sid) return;
+        try {
+          await request(`/api/session/${sid}/match/${match.matchId}/end`, { method: 'POST' });
+          await refreshDashboard();
+        } catch (e) {
+          alert(e.message);
+        }
+      });
+      matchWrap.appendChild(div);
+    });
+    if (!(data.matches || []).length) matchWrap.innerHTML = '<div class="muted">진행 중 경기 없음</div>';
+  }
+
+  $('loginBtn').addEventListener('click', async () => {
+    try {
+      const res = await request('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: $('email').value.trim(),
+          password: $('password').value
+        })
+      });
+      state.token = res.data.accessToken;
+      $('authInfo').textContent = '로그인 완료 / Bearer 토큰 저장됨';
+      await loadSessions();
+    } catch (e) {
+      $('authInfo').textContent = '로그인 실패';
+      alert(e.message);
+    }
+  });
+
+  $('logoutBtn').addEventListener('click', () => {
+    state.token = '';
+    $('authInfo').textContent = '토큰 없음';
+    log('로그아웃 처리');
+  });
+
+  $('loadSessionsBtn').addEventListener('click', async () => {
+    try {
+      await loadSessions();
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
+  $('sessionSelect').addEventListener('change', async (e) => {
+    $('sessionId').value = e.target.value;
+    resetDashboardSelections();
+    try {
+      await refreshDashboard();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+
+  $('refreshBtn').addEventListener('click', async () => {
+    try {
+      await refreshDashboard();
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
+  $('participantSortMode').addEventListener('change', renderDashboard);
+
+  $('createSessionBtn').addEventListener('click', async () => {
+    try {
+      const res = await request('/api/session', {
+        method: 'POST',
+        body: JSON.stringify({
+          category: $('sessionCategory').value || 'REGULAR',
+          location: $('sessionLocation').value.trim() || null,
+          note: $('sessionNote').value.trim() || null
+        })
+      });
+      $('sessionId').value = res.data;
+      await loadSessions();
+      $('sessionSelect').value = String(res.data);
+      resetDashboardSelections();
+      await refreshDashboard();
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
+  $('endSessionBtn').addEventListener('click', async () => {
+    const sid = currentSessionId();
+    if (!sid) return alert('sessionId가 필요합니다.');
+    if (!confirm('세션을 종료할까요?')) return;
+    try {
+      await request(`/api/session/${sid}/end`, { method: 'PATCH' });
+      await loadSessions();
+      await refreshDashboard();
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
+  $('searchMembersBtn').addEventListener('click', async () => {
+    try {
+      await searchMembers();
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
+  $('resetMembersBtn').addEventListener('click', () => {
+    $('memberFilterName').value = '';
+    $('memberFilterSchool').value = '';
+    $('memberFilterGeneration').value = '';
+    $('memberFilterGender').value = '';
+    $('memberFilterActive').value = '';
+    $('memberPage').value = '0';
+    $('memberSize').value = '10';
+    $('memberSort').value = 'id,desc';
+  });
+
+  $('toggleAllMembers').addEventListener('change', () => {
+    const rows = [...$('membersTbody').querySelectorAll('input[data-member-id]')];
+    rows.forEach(input => {
+      input.checked = $('toggleAllMembers').checked;
+      const id = Number(input.dataset.memberId);
+      if ($('toggleAllMembers').checked) state.selectedMemberIds.add(id);
+      else state.selectedMemberIds.delete(id);
+    });
+  });
+
+  $('addSelectedMembersBtn').addEventListener('click', async () => {
+    const sid = currentSessionId();
+    if (!sid) return alert('세션을 먼저 선택하세요.');
+    const memberIds = [...state.selectedMemberIds];
+    if (!memberIds.length) return alert('추가할 멤버를 선택하세요.');
+
+    try {
+      await request(`/api/session/${sid}/participant`, {
+        method: 'POST',
+        body: JSON.stringify({ memberIds })
+      });
+      state.selectedMemberIds.clear();
+      $('toggleAllMembers').checked = false;
+      await searchMembers();
+      await refreshDashboard();
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
+  $('createWaitingTeamBtn').addEventListener('click', async () => {
+    const sid = currentSessionId();
+    if (!sid) return alert('세션을 먼저 선택하세요.');
+    const ids = [...state.selectedListedParticipantIds];
+    if (ids.length !== 4) return alert('LISTED 참가자 4명을 선택해야 합니다.');
+
+    try {
+      await request(`/api/session/${sid}/waiting-team`, {
+        method: 'POST',
+        body: JSON.stringify({ sessionParticipantIds: ids })
+      });
+      state.selectedListedParticipantIds.clear();
+      await refreshDashboard();
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
+  $('reAddRemovedBtn').addEventListener('click', async () => {
+    const sid = currentSessionId();
+    if (!sid) return alert('세션을 먼저 선택하세요.');
+    const memberIds = [...state.selectedRemovedMemberIds];
+    if (!memberIds.length) return alert('재추가할 REMOVED 참가자를 선택하세요.');
+
+    try {
+      await request(`/api/session/${sid}/participant`, {
+        method: 'POST',
+        body: JSON.stringify({ memberIds })
+      });
+      state.selectedRemovedMemberIds.clear();
+      await refreshDashboard();
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
+  $('clearListedSelectionBtn').addEventListener('click', () => {
+    state.selectedListedParticipantIds.clear();
+    renderDashboard();
+  });
+
+  $('clearRemovedSelectionBtn').addEventListener('click', () => {
+    state.selectedRemovedMemberIds.clear();
+    renderDashboard();
+  });
+
+  // 초기 렌더
+  refreshSelectionSummary();
+  renderDashboard();
+</script>
+</body>
+</html>

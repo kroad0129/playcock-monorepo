@@ -1,6 +1,7 @@
 package com.playcock.member;
 
 import com.playcock.global.enums.Gender;
+import com.playcock.global.enums.MemberType;
 import com.playcock.global.response.ApiResponse;
 import com.playcock.member.dto.MemberCreateRequest;
 import com.playcock.member.dto.MemberResponse;
@@ -46,6 +47,7 @@ public class MemberController {
             @RequestParam(required = false) String schoolName,
             @RequestParam(required = false) String generation,
             @RequestParam(required = false) Gender gender,
+            @RequestParam(required = false) MemberType memberType,
             @RequestParam(required = false) Boolean active,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -67,6 +69,7 @@ public class MemberController {
                 schoolName,
                 generation,
                 gender,
+                memberType,
                 active,
                 pageable
         );

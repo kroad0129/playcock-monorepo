@@ -1,6 +1,7 @@
 package com.playcock.member;
 
 import com.playcock.global.enums.Gender;
+import com.playcock.global.enums.MemberType;
 import com.playcock.global.exception.MemberNotFoundException;
 import com.playcock.member.dto.MemberCreateRequest;
 import com.playcock.member.dto.MemberResponse;
@@ -49,6 +50,7 @@ public class MemberService {
             String schoolName,
             String generation,
             Gender gender,
+            MemberType memberType,
             Boolean active,
             Pageable pageable
     ) {
@@ -60,6 +62,7 @@ public class MemberService {
                 .and(MemberSpecification.schoolNameContains(schoolName))
                 .and(MemberSpecification.generationEqual(normalizedGeneration))
                 .and(MemberSpecification.genderEqual(gender))
+                .and(MemberSpecification.memberTypeEqual(memberType))
                 .and(MemberSpecification.activeEqual(active));
 
         return memberRepository.findAll(spec, pageable)

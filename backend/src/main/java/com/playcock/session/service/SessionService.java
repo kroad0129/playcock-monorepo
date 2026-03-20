@@ -67,7 +67,7 @@ public class SessionService {
 
     private String getCategoryLabel(SessionCategory category) {
         return switch (category) {
-            case REGULAR -> "정기모임";
+            case REGULAR -> "정기운동";
             case FLASH -> "번개";
         };
     }

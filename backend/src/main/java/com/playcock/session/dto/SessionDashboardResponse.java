@@ -17,7 +17,7 @@ public class SessionDashboardResponse {
     @Schema(description = "세션 ID", example = "1")
     private Long sessionId;
 
-    @Schema(description = "세션 제목", example = "2026년 3월 정기 모임")
+    @Schema(description = "세션 제목", example = "2026년 3월 정기 운동")
     private String title;
 
     @Schema(description = "현재 LISTED 상태 참가자 목록")

@@ -584,30 +584,45 @@ export default function SessionDashboardPage({ sessionId, onBack }: Props) {
                 />
               </div>
 
-              {listedParticipants.length === 0 ? (
-                <div className="muted">LIST 참가자가 없습니다.</div>
-              ) : (
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, 1fr)",
-                    gap: 8,
-                    maxHeight: "calc(100vh - 380px)",
-                    overflowY: "auto",
-                  }}
-                >
-                  {listedParticipants.map((item) => (
-                    <ListedParticipantCard
-                      key={item.participantId}
-                      item={item}
-                      serverNow={serverNow}
-                      checked={selectedListedIds.includes(item.participantId)}
-                      disabled={actionLoading}
-                      onToggle={toggleListed}
-                    />
-                  ))}
-                </div>
-              )}
+              <div
+                style={{
+                  minHeight: "calc(100vh - 380px)",
+                  maxHeight: "calc(100vh - 380px)",
+                  overflowY: "auto",
+                }}
+              >
+                {listedParticipants.length === 0 ? (
+                  <div
+                    style={{
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <div className="muted">LIST 참가자가 없습니다.</div>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(3, 1fr)",
+                      gap: 8,
+                    }}
+                  >
+                    {listedParticipants.map((item) => (
+                      <ListedParticipantCard
+                        key={item.participantId}
+                        item={item}
+                        serverNow={serverNow}
+                        checked={selectedListedIds.includes(item.participantId)}
+                        disabled={actionLoading}
+                        onToggle={toggleListed}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </SectionCard>
 
             <SectionCard title="대기" count={dashboard.waitingTeams.length}>

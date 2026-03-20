@@ -209,7 +209,7 @@ button {
 .grid-3,
 .dashboard-grid-old {
   display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr;
+  grid-template-columns: 2.5fr 1fr 1fr;
   gap: 10px;
   min-height: 74vh;
 }
@@ -412,10 +412,7 @@ button {
 
 .list-item-old-selected {
   border-color: #2b57ff;
-  box-shadow:
-    inset 0 0 0 2px #2b57ff,
-    0 0 0 3px rgba(43, 87, 255, 0.12);
-  transform: translateY(-1px);
+  box-shadow: inset 0 0 0 2px #2b57ff;
 }
 
 .small-tile,

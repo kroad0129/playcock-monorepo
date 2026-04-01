@@ -14,6 +14,7 @@ public class SessionListItemResponse {
     private Long sessionId;
     private String title;
     private SessionCategory category;
+    private String note;
     private SessionStatus status;
     private String location;
     private LocalDateTime startedAt;

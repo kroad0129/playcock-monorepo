@@ -203,6 +203,7 @@ public class SessionService {
                         .sessionId(session.getId())
                         .title(session.getTitle())
                         .category(session.getCategory())
+                        .note(session.getNote())
                         .status(session.getStatus())
                         .location(session.getLocation())
                         .startedAt(session.getStartedAt())

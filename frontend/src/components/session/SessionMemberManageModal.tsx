@@ -28,6 +28,54 @@ type ActiveParticipantMap = Record<
   }
 >;
 
+const KOREAN_CONSONANTS = [
+  "ㄱ",
+  "ㄴ",
+  "ㄷ",
+  "ㄹ",
+  "ㅁ",
+  "ㅂ",
+  "ㅅ",
+  "ㅇ",
+  "ㅈ",
+  "ㅊ",
+  "ㅋ",
+  "ㅌ",
+  "ㅍ",
+  "ㅎ",
+];
+
+const getFirstConsonant = (str: string): string | null => {
+  if (!str) return null;
+  const char = str.charCodeAt(0);
+  if (char >= 0xac00 && char <= 0xd7a3) {
+    const consonants = [
+      "ㄱ",
+      "ㄲ",
+      "ㄴ",
+      "ㄷ",
+      "ㄸ",
+      "ㄹ",
+      "ㅁ",
+      "ㅂ",
+      "ㅃ",
+      "ㅅ",
+      "ㅆ",
+      "ㅇ",
+      "ㅈ",
+      "ㅉ",
+      "ㅊ",
+      "ㅋ",
+      "ㅌ",
+      "ㅍ",
+      "ㅎ",
+    ];
+    const index = Math.floor((char - 0xac00) / (21 * 28));
+    return consonants[index];
+  }
+  return null;
+};
+
 const translateGender = (gender: Gender) => {
   switch (gender) {
     case "MALE":
@@ -87,6 +135,9 @@ export default function SessionMemberManageModal({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [listSearch, setListSearch] = useState("");
+  const [selectedConsonant, setSelectedConsonant] = useState<string | null>(
+    null,
+  );
 
   const activeParticipantMap = useMemo(() => {
     const map: ActiveParticipantMap = {};
@@ -130,13 +181,29 @@ export default function SessionMemberManageModal({
       return 0;
     });
 
+    let result = sortedMembers;
     const keyword = listSearch.trim().toLowerCase();
-    if (!keyword) return sortedMembers;
 
-    return sortedMembers.filter((member) =>
-      member.name.toLowerCase().includes(keyword),
-    );
-  }, [members, listSearch, activeParticipantMap, removedParticipants]);
+    if (keyword) {
+      result = result.filter((member) =>
+        member.name.toLowerCase().includes(keyword),
+      );
+    }
+
+    if (selectedConsonant) {
+      result = result.filter(
+        (member) => getFirstConsonant(member.name) === selectedConsonant,
+      );
+    }
+
+    return result;
+  }, [
+    members,
+    listSearch,
+    activeParticipantMap,
+    removedParticipants,
+    selectedConsonant,
+  ]);
 
   useEffect(() => {
     if (!open) return;
@@ -246,12 +313,39 @@ export default function SessionMemberManageModal({
             />
           </div>
 
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 4,
+              marginBottom: 12,
+            }}
+          >
+            <button
+              className={`chip-old ${!selectedConsonant ? "chip-old-active" : ""}`}
+              onClick={() => setSelectedConsonant(null)}
+            >
+              전체
+            </button>
+            {KOREAN_CONSONANTS.map((c) => (
+              <button
+                key={c}
+                className={`chip-old ${selectedConsonant === c ? "chip-old-active" : ""}`}
+                onClick={() =>
+                  setSelectedConsonant(selectedConsonant === c ? null : c)
+                }
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+
           {loading ? (
             <div>불러오는 중...</div>
           ) : (
             <div
               className="form-stack"
-              style={{ maxHeight: "60vh", overflowY: "auto" }}
+              style={{ maxHeight: "60vh", overflowY: "auto", minHeight: "40vh" }}
             >
               {filteredMembers.map((member) => {
                 const activeInfo = activeParticipantMap[member.id];

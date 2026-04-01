@@ -71,6 +71,17 @@ function matchTypeKo(type: string) {
   return type;
 }
 
+function getWaitingTeamMatchType(members: ParticipantDto[]) {
+  const maleCount = members.filter(
+    (m) => getGenderValue(m.gender) === "MALE",
+  ).length;
+
+  if (maleCount === 4) return "MALE_DOUBLE";
+  if (maleCount === 2) return "MIXED_DOUBLE";
+  if (maleCount === 0) return "FEMALE_DOUBLE";
+  return null;
+}
+
 function SectionCard({
   title,
   count,
@@ -167,13 +178,22 @@ function WaitingTeamCard({
   onCancel: (waitingTeamId: number) => void;
   onStart: (waitingTeamId: number) => void;
 }) {
+  const matchType = getWaitingTeamMatchType(team.members);
+
   return (
     <div className="waiting-item waiting-item-old">
       <div
         className="wait-title-old"
         style={{ display: "flex", justifyContent: "space-between" }}
       >
-        <span>대기 #{team.queueOrder}</span>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <span>대기 #{team.queueOrder}</span>
+          {matchType && (
+            <span className="meta-old" style={{ marginLeft: 8 }}>
+              {matchTypeKo(matchType)}
+            </span>
+          )}
+        </div>
         <span>{formatClockDuration(serverNow, team.createdAt)}</span>
       </div>
 

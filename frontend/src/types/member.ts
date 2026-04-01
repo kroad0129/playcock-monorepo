@@ -1,5 +1,6 @@
 export type Gender = "MALE" | "FEMALE" | "OTHER" | "UNKNOWN";
 export type MemberType = "MEMBER" | "GUEST" | "ETC";
+export type Grade = "NONE" | "A" | "B" | "C" | "D" | "E" | "F";
 
 export interface MemberResponse {
   id: number;
@@ -12,6 +13,7 @@ export interface MemberResponse {
   memberType: MemberType;
   active: boolean;
   note: string | null;
+  grade: Grade;
 }
 
 export interface MemberCreateRequest {
@@ -24,6 +26,7 @@ export interface MemberCreateRequest {
   memberType: MemberType;
   active: boolean;
   note?: string;
+  grade: Grade;
 }
 
 export interface MemberUpdateRequest {
@@ -36,6 +39,7 @@ export interface MemberUpdateRequest {
   memberType: MemberType;
   active: boolean;
   note?: string;
+  grade: Grade;
 }
 
 export interface MemberPageData {

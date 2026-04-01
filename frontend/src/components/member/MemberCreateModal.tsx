@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type {
   Gender,
+  Grade,
   MemberCreateRequest,
   MemberType,
 } from "../../types/member";
@@ -22,6 +23,7 @@ export default function MemberCreateModal({ open, onClose, onSubmit }: Props) {
     memberType: "MEMBER" as MemberType,
     active: true,
     note: "",
+    grade: "NONE" as Grade,
   });
 
   if (!open) return null;
@@ -42,6 +44,7 @@ export default function MemberCreateModal({ open, onClose, onSubmit }: Props) {
       memberType: "MEMBER",
       active: true,
       note: "",
+      grade: "NONE",
     });
     onClose();
   };
@@ -97,6 +100,19 @@ export default function MemberCreateModal({ open, onClose, onSubmit }: Props) {
               <option value="MEMBER">부원</option>
               <option value="GUEST">게스트</option>
               <option value="ETC">기타</option>
+            </select>
+            <select
+              className="select"
+              value={form.grade}
+              onChange={(e) => update("grade", e.target.value as Grade)}
+            >
+              <option value="NONE">없음</option>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+              <option value="E">E</option>
+              <option value="F">F</option>
             </select>
             <input
               className="input"

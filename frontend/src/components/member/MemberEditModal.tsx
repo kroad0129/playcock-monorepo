@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type {
   Gender,
+  Grade,
   MemberResponse,
   MemberType,
   MemberUpdateRequest,
@@ -29,6 +30,7 @@ export default function MemberEditModal({
     memberType: "MEMBER" as MemberType,
     active: true,
     note: "",
+    grade: "NONE" as Grade,
   });
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export default function MemberEditModal({
       memberType: member.memberType,
       active: member.active,
       note: member.note || "",
+      grade: member.grade,
     });
   }, [member]);
 
@@ -108,6 +111,19 @@ export default function MemberEditModal({
               <option value="MEMBER">부원</option>
               <option value="GUEST">게스트</option>
               <option value="ETC">기타</option>
+            </select>
+            <select
+              className="select"
+              value={form.grade}
+              onChange={(e) => update("grade", e.target.value as Grade)}
+            >
+              <option value="NONE">없음</option>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+              <option value="E">E</option>
+              <option value="F">F</option>
             </select>
             <input
               className="input"

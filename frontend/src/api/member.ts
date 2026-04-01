@@ -36,7 +36,17 @@ export async function getMembers(params?: {
   const response = await apiClient.get<ApiResponse<MemberPageData>>(
     `/members?${query.toString()}`,
   );
-  return response.data.data;
+
+  const pageData = response.data.data;
+  const patchedContent = pageData.content.map((member) => ({
+    ...member,
+    grade: member.grade || "NONE",
+  }));
+
+  return {
+    ...pageData,
+    content: patchedContent,
+  };
 }
 
 export async function createMember(request: MemberCreateRequest) {

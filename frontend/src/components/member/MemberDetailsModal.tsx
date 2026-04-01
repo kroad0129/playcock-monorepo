@@ -1,4 +1,9 @@
-import type { Gender, MemberResponse, MemberType } from "../../types/member";
+import type {
+  Gender,
+  Grade,
+  MemberResponse,
+  MemberType,
+} from "../../types/member";
 
 interface Props {
   member: MemberResponse | null;
@@ -29,6 +34,11 @@ const translateMemberType = (memberType: MemberType) => {
     case "ETC":
       return "기타";
   }
+};
+
+const translateGrade = (grade: Grade) => {
+  if (grade === "NONE") return "없음";
+  return grade;
 };
 
 export default function MemberDetailsModal({
@@ -86,6 +96,10 @@ export default function MemberDetailsModal({
             <div className="form-group">
               <label>유형</label>
               <p>{translateMemberType(member.memberType)}</p>
+            </div>
+            <div className="form-group">
+              <label>급수</label>
+              <p>{translateGrade(member.grade)}</p>
             </div>
             <div className="form-group">
               <label>이메일</label>

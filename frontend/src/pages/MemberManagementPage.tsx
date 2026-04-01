@@ -46,7 +46,7 @@ export default function MemberManagementPage({ onBack }: Props) {
         ...filters,
         page: 0,
         size: 50,
-        sort: "id,desc",
+        sort: "name,asc",
       });
       setMembers(page.content);
     } catch (error) {

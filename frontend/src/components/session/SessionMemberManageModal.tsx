@@ -118,8 +118,15 @@ export default function SessionMemberManageModal({
     const sortedMembers = [...members].sort((a, b) => {
       const aIsActive = a.id in activeParticipantMap;
       const bIsActive = b.id in activeParticipantMap;
-      if (aIsActive && !bIsActive) return -1;
-      if (!aIsActive && bIsActive) return 1;
+      const aIsRemoved = removedParticipants.some((p) => p.memberId === a.id);
+      const bIsRemoved = removedParticipants.some((p) => p.memberId === b.id);
+
+      const aIsTop = aIsActive || aIsRemoved;
+      const bIsTop = bIsActive || bIsRemoved;
+
+      if (aIsTop && !bIsTop) return -1;
+      if (!bIsTop && aIsTop) return 1;
+
       return 0;
     });
 
@@ -129,7 +136,7 @@ export default function SessionMemberManageModal({
     return sortedMembers.filter((member) =>
       member.name.toLowerCase().includes(keyword),
     );
-  }, [members, listSearch, activeParticipantMap]);
+  }, [members, listSearch, activeParticipantMap, removedParticipants]);
 
   useEffect(() => {
     if (!open) return;
@@ -137,7 +144,7 @@ export default function SessionMemberManageModal({
     const load = async () => {
       setLoading(true);
       try {
-        const page = await getMembers({ page: 0, size: 200, sort: "id,desc" });
+        const page = await getMembers({ page: 0, size: 200, sort: "name,asc" });
         setMembers(page.content);
         setCheckedIds(initialCheckedIds);
       } catch (error: any) {

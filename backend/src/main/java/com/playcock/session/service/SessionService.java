@@ -60,7 +60,7 @@ public class SessionService {
 
     private String generateSessionTitle(LocalDateTime dateTime, SessionCategory category) {
         String formatted = dateTime.format(
-                DateTimeFormatter.ofPattern("yyyy년 M월 d일 H시 mm분", Locale.KOREAN)
+                DateTimeFormatter.ofPattern("yyyy년 M월 d일 E요일", Locale.KOREAN)
         );
         return formatted + " " + getCategoryLabel(category);
     }

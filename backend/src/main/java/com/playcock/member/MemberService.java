@@ -2,6 +2,7 @@ package com.playcock.member;
 
 import com.playcock.global.enums.Gender;
 import com.playcock.global.enums.MemberType;
+import com.playcock.global.enums.Grade;
 import com.playcock.global.exception.MemberNotFoundException;
 import com.playcock.member.dto.MemberCreateRequest;
 import com.playcock.member.dto.MemberResponse;
@@ -31,6 +32,7 @@ public class MemberService {
                 .phoneNumber(request.getPhoneNumber())
                 .memberType(request.getMemberType())
                 .active(request.getActive())
+                .grade(request.getGrade())
                 .note(request.getNote())
                 .build();
 
@@ -51,6 +53,7 @@ public class MemberService {
             String generation,
             Gender gender,
             MemberType memberType,
+            Grade grade,
             Boolean active,
             Pageable pageable
     ) {
@@ -63,6 +66,7 @@ public class MemberService {
                 .and(MemberSpecification.generationEqual(normalizedGeneration))
                 .and(MemberSpecification.genderEqual(gender))
                 .and(MemberSpecification.memberTypeEqual(memberType))
+                .and(MemberSpecification.gradeEqual(grade))
                 .and(MemberSpecification.activeEqual(active));
 
         return memberRepository.findAll(spec, pageable)
@@ -81,6 +85,7 @@ public class MemberService {
                 request.getPhoneNumber(),
                 request.getMemberType(),
                 request.getActive(),
+                request.getGrade(),
                 request.getNote()
         );
 

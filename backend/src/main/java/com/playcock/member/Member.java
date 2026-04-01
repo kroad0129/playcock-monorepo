@@ -3,6 +3,7 @@ package com.playcock.member;
 import com.playcock.global.entity.BaseTimeEntity;
 import com.playcock.global.enums.Gender;
 import com.playcock.global.enums.MemberType;
+import com.playcock.global.enums.Grade;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -47,6 +48,10 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean active;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Grade grade = Grade.NONE;
+
     @Column(length = 500)
     private String note;
 
@@ -62,6 +67,7 @@ public class Member extends BaseTimeEntity {
             String phoneNumber,
             MemberType memberType,
             boolean active,
+            Grade grade,
             String note
     ) {
         this.name = name;
@@ -72,6 +78,7 @@ public class Member extends BaseTimeEntity {
         this.phoneNumber = phoneNumber;
         this.memberType = memberType;
         this.active = active;
+        this.grade = grade != null ? grade : Grade.NONE;
         this.note = note;
     }
 
@@ -84,6 +91,7 @@ public class Member extends BaseTimeEntity {
             String phoneNumber,
             MemberType memberType,
             boolean active,
+            Grade grade,
             String note
     ) {
         this.name = name;
@@ -94,6 +102,7 @@ public class Member extends BaseTimeEntity {
         this.phoneNumber = phoneNumber;
         this.memberType = memberType;
         this.active = active;
+        if(grade != null) this.grade = grade;
         this.note = note;
     }
 

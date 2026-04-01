@@ -2,6 +2,7 @@ package com.playcock.member.dto;
 
 import com.playcock.global.enums.Gender;
 import com.playcock.global.enums.MemberType;
+import com.playcock.global.enums.Grade;
 import com.playcock.member.Member;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,6 +20,7 @@ public class MemberResponse {
     private String phoneNumber;
     private MemberType memberType;
     private boolean active;
+    private Grade grade;
     private String note;
 
     public static MemberResponse from(Member member) {
@@ -32,6 +34,7 @@ public class MemberResponse {
                 .phoneNumber(member.getPhoneNumber())
                 .memberType(member.getMemberType())
                 .active(member.isActive())
+                .grade(member.getGrade())
                 .note(member.getNote())
                 .build();
     }

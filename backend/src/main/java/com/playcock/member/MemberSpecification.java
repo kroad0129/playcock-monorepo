@@ -2,6 +2,7 @@ package com.playcock.member;
 
 import com.playcock.global.enums.Gender;
 import com.playcock.global.enums.MemberType;
+import com.playcock.global.enums.Grade;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 
@@ -39,6 +40,13 @@ public class MemberSpecification {
         return (root, query, cb) ->
                 memberType != null
                         ? cb.equal(root.get("memberType"), memberType)
+                        : null;
+    }
+
+    public static Specification<Member> gradeEqual(Grade grade) {
+        return (root, query, cb) ->
+                grade != null
+                        ? cb.equal(root.get("grade"), grade)
                         : null;
     }
 

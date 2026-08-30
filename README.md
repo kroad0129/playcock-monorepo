@@ -87,7 +87,7 @@ flowchart TD
 회원 원장과 운동 세션을 분리해 관리합니다. 회원의 기본 정보는 계속 유지하고, 운동별 참가 여부와 `LISTED`·`WAITING`·`PLAYING` 상태는 해당 세션 안에서 관리합니다.
 
 <p align="center">
-  <img src="docs/images/member-management.jpg" width="31%" alt="회원 검색 및 관리 화면" />
+  <img src="docs/images/member-managment.jpg" width="31%" alt="회원 검색 및 관리 화면" />
   <img src="docs/images/session-list.jpg" width="31%" alt="운동 세션 목록 화면" />
   <img src="docs/images/session-members.jpg" width="31%" alt="세션 참가자 수정 화면" />
 </p>

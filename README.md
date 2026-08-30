@@ -89,7 +89,7 @@ flowchart TD
 <p align="center">
   <img src="docs/images/member-management.jpg" width="31%" alt="회원 검색 및 관리 화면" />
   <img src="docs/images/session-list.jpg" width="31%" alt="운동 세션 목록 화면" />
-  <img src="docs/images/session-participants.jpg" width="31%" alt="세션 참가자 수정 화면" />
+  <img src="docs/images/session-members.jpg" width="31%" alt="세션 참가자 수정 화면" />
 </p>
 
 <p align="center">
